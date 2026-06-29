@@ -1,0 +1,325 @@
+{
+  "name": "customer-sentiment-pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sentiment",
+        "options": {
+          "allowedOrigins": "=*",
+          "responseCode": {
+            "values": {}
+          },
+          "responseData": "Default"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "f0664a6e-0f98-4b6c-8642-eb7bc79a58a8",
+      "name": "Webhook",
+      "webhookId": "f49ec108-9c58-4716-ac71-47521edff1c7"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "openai/gpt-oss-20b",
+          "mode": "list",
+          "cachedResultName": "OPENAI/GPT-OSS-20B"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Anda adalah AI analisis sentimen teks untuk tim produk.\nTugas Anda adalah menganalisis teks ulasan pelanggan yang diberikan.\nAnda WAJIB mengembalikan output dalam format JSON murni tanpa markdown, tanpa penjelasan, dengan struktur seperti ini:\n{\n  \"sentiment\": \"Positive\" atau \"Neutral\" atau \"Negative\",\n  \"confidence\": angka float antara 0.0 sampai 1.0,\n  \"category\": \"Product_Bug\" atau \"Pricing\" atau \"Customer_Service\" atau \"UI_UX\"\n}\n"
+            },
+            {
+              "content": "=Teks ulasan: {{ $json.body.review_text }}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "dc044d0c-39da-4602-9b00-0c8a875a46ef",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "d7nD1jMoUG2UPCvO",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const newItems = [];\n\nfor (const item of $input.all()) {\n  let aiResponse = item.json.output[0].content[0].text;\n  aiResponse = aiResponse.replace(/```json|```/g, '').trim();\n  const parsedAI = JSON.parse(aiResponse);\n\n  const originalData = $('Webhook').first().json.body;\n\n\n  newItems.push({\n    json: {\n      customer_name: originalData.customer_name,\n      raw_review: originalData.review_text,\n      sentiment: parsedAI.sentiment,\n      confidence: parseFloat(parsedAI.confidence),\n      category: parsedAI.category\n    }\n  });\n}\n\n\nreturn newItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -96
+      ],
+      "id": "e14678d9-df78-41d1-9781-ada671bd2035",
+      "name": "Data Cleaner"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "customer_reviews",
+          "mode": "list",
+          "cachedResultName": "customer_reviews"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "escalated": false,
+            "id": "=",
+            "confidence": "={{ $json.cleaned_data.confidence }}",
+            "customer_name": "={{ $json.cleaned_data.customer_name }}",
+            "raw_review": "={{ $json.cleaned_data.raw_review }}",
+            "sentiment": "={{ $json.cleaned_data.sentiment }}",
+            "category": "={{ $json.cleaned_data.category }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "raw_review",
+              "displayName": "raw_review",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment",
+              "displayName": "sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "escalated",
+              "displayName": "escalated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        800,
+        -96
+      ],
+      "id": "6a5cb03d-5a6b-4f33-aef6-ff3f1258987e",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "UX5pmIhZdAlCDcZ7",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "12e0ed8c-28a5-4389-9bef-e9db449114c0",
+              "leftValue": "={{ $json.sentiment }}",
+              "rightValue": "Negative",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1024,
+        -96
+      ],
+      "id": "70515ea8-34cb-4d1d-9dde-1bae621bc3f9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "listId": "6a422ff95aa0e1b194f5943b",
+        "name": "=[{{ $json.category }}] Laporan Negatif dari {{  $json.customer_name}}",
+        "description": "=Ulasan: {{ $json.raw_review }}  Tingkat Keyakinan AI: {{ $json.confidence }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "a75ff985-56a1-4f0f-ae6b-648397fee06c",
+      "name": "Create a card",
+      "credentials": {
+        "trelloApi": {
+          "id": "cbw1L9ml2GPUvaHw",
+          "name": "Trello account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Data Cleaner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Cleaner": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "77dace18-90e7-4a40-8e35-3fd678580f99",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e5f89121fdaefbb3f9b72384fdec8344f7cd1f7db2931bb02aba2b35c129ab1f"
+  },
+  "nodeGroups": [],
+  "id": "YQXJ8ARYXJxD7g2Q",
+  "tags": []
+}

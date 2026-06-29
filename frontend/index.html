@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Feedback Portal</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="container">
+        <div class="glass-card">
+            <header class="header">
+                <h1 class="gradient-text">We Value Your Voice</h1>
+                <p class="subtitle">Help us improve your experience by sharing your feedback. Our AI will analyze your response to serve you better.</p>
+            </header>
+
+            <form id="feedbackForm" class="feedback-form">
+                <div class="form-group">
+                    <label for="customerName">Your Name</label>
+                    <input type="text" id="customerName" name="customerName" placeholder="e.g. John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewText">Your Experience</label>
+                    <textarea id="reviewText" name="reviewText" rows="5" placeholder="Tell us what you liked or what needs improvement..." required></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn" class="glow-button">
+                    <span class="button-text">Send Feedback</span>
+                    <span class="spinner" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div id="statusMessage" class="status-message" style="display: none;">
+                <!-- Status message will be injected here by JS -->
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
