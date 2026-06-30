@@ -9,9 +9,10 @@ graph TD
     A[External App] -->|Raw Review JSON| B(n8n Webhook Trigger)
     B --> C{AI Agent Node}
     C -->|Extracts Sentiment & Category| D[Data Sanitization Code Node]
-    D -->|Structured Data| E[(PostgreSQL)]
+    D -->|Structured Data| E[(PostgreSQL Insert)]
     E --> F{Is Sentiment Negative?}
     F -->|True| G[Create Trello Card]
+    G -->|Updates Status| I[(PostgreSQL Update Escalated = True)]
     F -->|False| H[End Workflow]
 ```
 
@@ -53,7 +54,7 @@ This project uses Docker Compose for a seamless setup experience.
    - Open `http://localhost:5679` in your browser.
    - Create a local account for the first time.
    - Go to **Workflows**, click **Add Workflow** -> Open the top-right menu -> **Import from File**.
-   - Select the `n8n-workflow.json` file provided in this repository.
+   - Select the `customer-sentiment-pipeline.json` file provided in this repository.
    - Make sure to connect your *Credentials* inside the nodes (OpenAI/Groq, PostgreSQL, and Trello).
    - Save and change the toggle to **Active** / **Publish**.
 
@@ -71,7 +72,7 @@ curl -X POST http://localhost:5679/webhook/sentiment \
 -H "Content-Type: application/json" \
 -d '{"customer_name": "John Doe", "review_text": "The app keeps crashing when I try to upload a photo."}'
 ```
-*Expected Result: Data inserted into PostgreSQL, and a new Trello Card created in the Escalation board.*
+*Expected Result: Data inserted into PostgreSQL, a new Trello Card created, and the database `escalated` status updated to TRUE.*
 
 **Example Payload (Positive Review):**
 ```bash
