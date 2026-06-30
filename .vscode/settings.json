@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5433,
+            "driver": "PostgreSQL",
+            "name": "db_docker_n8n",
+            "database": "n8n_database",
+            "username": "n8n_user",
+            "password": "n8n_secret_password"
+        }
+    ]
+}
